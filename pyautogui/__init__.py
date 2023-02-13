@@ -1,5 +1,5 @@
 # PyAutoGUI lets Python control the mouse and keyboard, and other GUI automation tasks. For Windows, macOS, and Linux,
-# on Python 3 and 2.
+# on Python 3.8
 # https://github.com/asweigart/pyautogui
 # Al Sweigart al@inventwithpython.com (Send me feedback & suggestions!)
 
@@ -10,10 +10,7 @@
 # primary secondary mouse button awareness
 
 
-from __future__ import absolute_import, division, print_function
-
-
-__version__ = "0.9.53"
+__version__ = "0.9.54"
 
 import sys
 import time
@@ -54,16 +51,7 @@ class ImageNotFoundException(PyAutoGUIException):
     """
 
 
-if sys.version_info[0] == 2 or sys.version_info[0:2] in ((3, 1), (3, 2)):
-    # Python 2 and 3.1 and 3.2 uses collections.Sequence
-    import collections
-
-    collectionsSequence = collections.Sequence
-else:
-    # Python 3.3+ uses collections.abc.Sequence
-    import collections.abc
-
-    collectionsSequence = collections.abc.Sequence  # type: ignore
+collectionsSequence = collections.abc.Sequence  # type: ignore
 
 
 try:
@@ -255,7 +243,6 @@ try:
         """
         mouseinfo.MouseInfoWindow()
 
-
 except ImportError:
 
     def mouseInfo():
@@ -282,7 +269,9 @@ def useImageNotFoundException(value=None):
     try:
         pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = value
     except NameError:
-        raise PyAutoGUIException("useImageNotFoundException() ws called but pyscreeze isn't installed.")
+        raise PyAutoGUIException(
+            "useImageNotFoundException() ws called but pyscreeze isn't installed."
+        )
 
 
 if sys.platform == "win32":  # PyGetWindow currently only supports Windows.
@@ -547,7 +536,9 @@ elif sys.platform == "win32":
 elif platform.system() == "Linux":
     from . import _pyautogui_x11 as platformModule
 else:
-    raise NotImplementedError("Your platform (%s) is not supported by PyAutoGUI." % (platform.system()))
+    raise NotImplementedError(
+        "Your platform (%s) is not supported by PyAutoGUI." % (platform.system())
+    )
 
 # TODO: Having module-wide user-writable global variables is bad. It makes
 # restructuring the code very difficult. For instance, what if we decide to
@@ -654,13 +645,13 @@ def _normalizeXYArgs(firstArg, secondArg):
     """
     if firstArg is None and secondArg is None:
         return position()
-    
+
     elif firstArg is None and secondArg is not None:
         return Point(int(position()[0]), int(secondArg))
-    
+
     elif secondArg is None and firstArg is not None:
         return Point(int(firstArg), int(position()[1]))
-    
+
     elif isinstance(firstArg, str):
         # If x is a string, we assume it's an image filename to locate on the screen:
         try:
@@ -683,7 +674,7 @@ def _normalizeXYArgs(firstArg, secondArg):
                 return Point(int(firstArg[0]), int(firstArg[1]))
             else:
                 raise PyAutoGUIException(
-                    "When passing a sequence for firstArg, secondArg must not be passed (received {0}).".format(
+                    "When passing a sequence for firstArg, secondArg must not be passed (received {}).".format(
                         repr(secondArg)
                     )
                 )
@@ -693,18 +684,20 @@ def _normalizeXYArgs(firstArg, secondArg):
                 return center(firstArg)
             else:
                 raise PyAutoGUIException(
-                    "When passing a sequence for firstArg, secondArg must not be passed and default to None (received {0}).".format(
+                    "When passing a sequence for firstArg, secondArg must not be passed and default to None (received {}).".format(
                         repr(secondArg)
                     )
                 )
         else:
             raise PyAutoGUIException(
-                "The supplied sequence must have exactly 2 or exactly 4 elements ({0} were received).".format(
+                "The supplied sequence must have exactly 2 or exactly 4 elements ({} were received).".format(
                     len(firstArg)
                 )
             )
     else:
-        return Point(int(firstArg), int(secondArg))  # firstArg and secondArg are just x and y number values
+        return Point(
+            int(firstArg), int(secondArg)
+        )  # firstArg and secondArg are just x and y number values
 
 
 def _logScreenshot(logScreenshot, funcName, funcArgs, folder="."):
@@ -731,7 +724,7 @@ def _logScreenshot(logScreenshot, funcName, funcArgs, folder="."):
         funcArgs = funcArgs[:12] + "..."
 
     now = datetime.datetime.now()
-    filename = "%s-%s-%s_%s-%s-%s-%s_%s_%s.png" % (
+    filename = "{}-{}-{}_{}-{}-{}-{}_{}_{}.png".format(
         now.year,
         str(now.month).rjust(2, "0"),
         str(now.day).rjust(2, "0"),
@@ -745,7 +738,9 @@ def _logScreenshot(logScreenshot, funcName, funcArgs, folder="."):
     filepath = os.path.join(folder, filename)
 
     # Delete the oldest screenshot if we've reached the maximum:
-    if (LOG_SCREENSHOTS_LIMIT is not None) and (len(G_LOG_SCREENSHOTS_FILENAMES) >= LOG_SCREENSHOTS_LIMIT):
+    if (LOG_SCREENSHOTS_LIMIT is not None) and (
+        len(G_LOG_SCREENSHOTS_FILENAMES) >= LOG_SCREENSHOTS_LIMIT
+    ):
         os.unlink(os.path.join(folder, G_LOG_SCREENSHOTS_FILENAMES[0]))
         del G_LOG_SCREENSHOTS_FILENAMES[0]
 
@@ -864,24 +859,37 @@ def _normalizeButton(button):
 
     # TODO - Check if the primary/secondary mouse buttons have been swapped:
     if button in (PRIMARY, SECONDARY):
-        swapped = False  # TODO - Add the operating system-specific code to detect mouse swap later.
-        if swapped:
-            if button == PRIMARY:
-                return RIGHT
-            elif button == SECONDARY:
-                return LEFT
-        else:
-            if button == PRIMARY:
-                return LEFT
-            elif button == SECONDARY:
-                return RIGHT
+        return (
+            RIGHT
+            if (swapped and button == PRIMARY) or (not swapped and button == SECONDARY)
+            else LEFT
+        )
 
     # Return a mouse button integer value, not a string like 'left':
-    return {LEFT: LEFT, MIDDLE: MIDDLE, RIGHT: RIGHT, 1: LEFT, 2: MIDDLE, 3: RIGHT, 4: 4, 5: 5, 6: 6, 7: 7}[button]
+    return {
+        LEFT: LEFT,
+        MIDDLE: MIDDLE,
+        RIGHT: RIGHT,
+        1: LEFT,
+        2: MIDDLE,
+        3: RIGHT,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+    }[button]
 
 
 @_genericPyAutoGUIChecks
-def mouseDown(x=None, y=None, button=PRIMARY, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def mouseDown(
+    x=None,
+    y=None,
+    button=PRIMARY,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs pressing a mouse button down (but not up).
 
     The x and y parameters detail where the mouse event happens. If None, the
@@ -909,12 +917,20 @@ def mouseDown(x=None, y=None, button=PRIMARY, duration=0.0, tween=linear, logScr
 
     _mouseMoveDrag("move", x, y, 0, 0, duration=0, tween=None)
 
-    _logScreenshot(logScreenshot, "mouseDown", "%s,%s" % (x, y), folder=".")
+    _logScreenshot(logScreenshot, "mouseDown", f"{x},{y}", folder=".")
     platformModule._mouseDown(x, y, button)
 
 
 @_genericPyAutoGUIChecks
-def mouseUp(x=None, y=None, button=PRIMARY, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def mouseUp(
+    x=None,
+    y=None,
+    button=PRIMARY,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs releasing a mouse button up (but not down beforehand).
 
     The x and y parameters detail where the mouse event happens. If None, the
@@ -942,13 +958,21 @@ def mouseUp(x=None, y=None, button=PRIMARY, duration=0.0, tween=linear, logScree
 
     _mouseMoveDrag("move", x, y, 0, 0, duration=0, tween=None)
 
-    _logScreenshot(logScreenshot, "mouseUp", "%s,%s" % (x, y), folder=".")
+    _logScreenshot(logScreenshot, "mouseUp", f"{x},{y}", folder=".")
     platformModule._mouseUp(x, y, button)
 
 
 @_genericPyAutoGUIChecks
 def click(
-    x=None, y=None, clicks=1, interval=0.0, button=PRIMARY, duration=0.0, tween=linear, logScreenshot=None, _pause=True
+    x=None,
+    y=None,
+    clicks=1,
+    interval=0.0,
+    button=PRIMARY,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
 ):
     """
     Performs pressing a mouse button down and then immediately releasing it. Returns ``None``.
@@ -988,24 +1012,30 @@ def click(
     # Move the mouse cursor to the x, y coordinate:
     _mouseMoveDrag("move", x, y, 0, 0, duration, tween)
 
-    _logScreenshot(logScreenshot, "click", "%s,%s,%s,%s" % (button, clicks, x, y), folder=".")
+    _logScreenshot(logScreenshot, "click", f"{button},{clicks},{x},{y}", folder=".")
 
-    if sys.platform == 'darwin':
-        for i in range(clicks):
-            failSafeCheck()
-            if button in (LEFT, MIDDLE, RIGHT):
+    for i in range(clicks):
+        failSafeCheck()
+        if button in (LEFT, MIDDLE, RIGHT):
+            if sys.platform == "darwin":
                 platformModule._multiClick(x, y, button, 1, interval)
-    else:
-        for i in range(clicks):
-            failSafeCheck()
-            if button in (LEFT, MIDDLE, RIGHT):
+                continue
+            else:
                 platformModule._click(x, y, button)
 
-            time.sleep(interval)
+        time.sleep(interval)
 
 
 @_genericPyAutoGUIChecks
-def leftClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def leftClick(
+    x=None,
+    y=None,
+    interval=0.0,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs a left mouse button click.
 
     This is a wrapper function for click('left', x, y).
@@ -1035,7 +1065,15 @@ def leftClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScree
 
 
 @_genericPyAutoGUIChecks
-def rightClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def rightClick(
+    x=None,
+    y=None,
+    interval=0.0,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs a right mouse button click.
 
     This is a wrapper function for click('right', x, y).
@@ -1063,7 +1101,15 @@ def rightClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScre
 
 
 @_genericPyAutoGUIChecks
-def middleClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def middleClick(
+    x=None,
+    y=None,
+    interval=0.0,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs a middle mouse button click.
 
     This is a wrapper function for click('middle', x, y).
@@ -1088,7 +1134,16 @@ def middleClick(x=None, y=None, interval=0.0, duration=0.0, tween=linear, logScr
 
 
 @_genericPyAutoGUIChecks
-def doubleClick(x=None, y=None, interval=0.0, button=LEFT, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def doubleClick(
+    x=None,
+    y=None,
+    interval=0.0,
+    button=LEFT,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs a double click.
 
     This is a wrapper function for click('left', x, y, 2, interval).
@@ -1124,14 +1179,23 @@ def doubleClick(x=None, y=None, interval=0.0, button=LEFT, duration=0.0, tween=l
         _mouseMoveDrag("move", x, y, 0, 0, duration=0, tween=None)
         x, y = platformModule._position()
         platformModule._multiClick(x, y, button, 2)
-        _logScreenshot(logScreenshot, 'click', '%s,2,%s,%s' % (button, x, y), folder='.')
+        _logScreenshot(logScreenshot, "click", f"{button},2,{x},{y}", folder=".")
     else:
         # Click for Windows or Linux:
         click(x, y, 2, interval, button, duration, tween, logScreenshot, _pause=False)
 
 
 @_genericPyAutoGUIChecks
-def tripleClick(x=None, y=None, interval=0.0, button=LEFT, duration=0.0, tween=linear, logScreenshot=None, _pause=True):
+def tripleClick(
+    x=None,
+    y=None,
+    interval=0.0,
+    button=LEFT,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=None,
+    _pause=True,
+):
     """Performs a triple click.
 
     This is a wrapper function for click('left', x, y, 3, interval).
@@ -1165,7 +1229,7 @@ def tripleClick(x=None, y=None, interval=0.0, button=LEFT, duration=0.0, tween=l
         x, y = _normalizeXYArgs(x, y)
         _mouseMoveDrag("move", x, y, 0, 0, duration=0, tween=None)
         x, y = platformModule._position()
-        _logScreenshot(logScreenshot, "click", "%s,3,%s,%s" % (x, y), folder=".")
+        _logScreenshot(logScreenshot, "click", "{},3,{},{}".format(x, y), folder=".")
         platformModule._multiClick(x, y, button, 3)
     else:
         # Click for Windows or Linux:
@@ -1198,7 +1262,7 @@ def scroll(clicks, x=None, y=None, logScreenshot=None, _pause=True):
         x, y = x[0], x[1]
     x, y = position(x, y)
 
-    _logScreenshot(logScreenshot, "scroll", "%s,%s,%s" % (clicks, x, y), folder=".")
+    _logScreenshot(logScreenshot, "scroll", f"{clicks},{x},{y}", folder=".")
     platformModule._scroll(clicks, x, y)
 
 
@@ -1226,7 +1290,7 @@ def hscroll(clicks, x=None, y=None, logScreenshot=None, _pause=True):
         x, y = x[0], x[1]
     x, y = position(x, y)
 
-    _logScreenshot(logScreenshot, "hscroll", "%s,%s,%s" % (clicks, x, y), folder=".")
+    _logScreenshot(logScreenshot, "hscroll", f"{clicks},{x},{y}", folder=".")
     platformModule._hscroll(clicks, x, y)
 
 
@@ -1254,12 +1318,14 @@ def vscroll(clicks, x=None, y=None, logScreenshot=None, _pause=True):
         x, y = x[0], x[1]
     x, y = position(x, y)
 
-    _logScreenshot(logScreenshot, "vscroll", "%s,%s,%s" % (clicks, x, y), folder=".")
+    _logScreenshot(logScreenshot, "vscroll", f"{clicks},{x},{y}", folder=".")
     platformModule._vscroll(clicks, x, y)
 
 
 @_genericPyAutoGUIChecks
-def moveTo(x=None, y=None, duration=0.0, tween=linear, logScreenshot=False, _pause=True):
+def moveTo(
+    x=None, y=None, duration=0.0, tween=linear, logScreenshot=False, _pause=True
+):
     """Moves the mouse cursor to a point on the screen.
 
     The x and y parameters detail where the mouse event happens. If None, the
@@ -1285,12 +1351,19 @@ def moveTo(x=None, y=None, duration=0.0, tween=linear, logScreenshot=False, _pau
     """
     x, y = _normalizeXYArgs(x, y)
 
-    _logScreenshot(logScreenshot, "moveTo", "%s,%s" % (x, y), folder=".")
+    _logScreenshot(logScreenshot, "moveTo", f"{x},{y}", folder=".")
     _mouseMoveDrag("move", x, y, 0, 0, duration, tween)
 
 
 @_genericPyAutoGUIChecks
-def moveRel(xOffset=None, yOffset=None, duration=0.0, tween=linear, logScreenshot=False, _pause=True):
+def moveRel(
+    xOffset=None,
+    yOffset=None,
+    duration=0.0,
+    tween=linear,
+    logScreenshot=False,
+    _pause=True,
+):
     """Moves the mouse cursor to a point on the screen, relative to its current
     position.
 
@@ -1315,7 +1388,7 @@ def moveRel(xOffset=None, yOffset=None, duration=0.0, tween=linear, logScreensho
     """
     xOffset, yOffset = _normalizeXYArgs(xOffset, yOffset)
 
-    _logScreenshot(logScreenshot, "moveRel", "%s,%s" % (xOffset, yOffset), folder=".")
+    _logScreenshot(logScreenshot, "moveRel", f"{xOffset},{yOffset}", folder=".")
     _mouseMoveDrag("move", None, None, xOffset, yOffset, duration, tween)
 
 
@@ -1324,7 +1397,14 @@ move = moveRel  # For PyAutoGUI 1.0, move() replaces moveRel().
 
 @_genericPyAutoGUIChecks
 def dragTo(
-    x=None, y=None, duration=0.0, tween=linear, button=PRIMARY, logScreenshot=None, _pause=True, mouseDownUp=True
+    x=None,
+    y=None,
+    duration=0.0,
+    tween=linear,
+    button=PRIMARY,
+    logScreenshot=None,
+    _pause=True,
+    mouseDownUp=True,
 ):
     """Performs a mouse drag (mouse movement while a button is held down) to a
     point on the screen.
@@ -1355,7 +1435,7 @@ def dragTo(
     """
     x, y = _normalizeXYArgs(x, y)
 
-    _logScreenshot(logScreenshot, "dragTo", "%s,%s" % (x, y), folder=".")
+    _logScreenshot(logScreenshot, "dragTo", f"{x},{y}", folder=".")
     if mouseDownUp:
         mouseDown(button=button, logScreenshot=False, _pause=False)
     _mouseMoveDrag("drag", x, y, 0, 0, duration, tween, button)
@@ -1365,7 +1445,14 @@ def dragTo(
 
 @_genericPyAutoGUIChecks
 def dragRel(
-    xOffset=0, yOffset=0, duration=0.0, tween=linear, button=PRIMARY, logScreenshot=None, _pause=True, mouseDownUp=True
+    xOffset=0,
+    yOffset=0,
+    duration=0.0,
+    tween=linear,
+    button=PRIMARY,
+    logScreenshot=None,
+    _pause=True,
+    mouseDownUp=True,
 ):
     """Performs a mouse drag (mouse movement while a button is held down) to a
     point on the screen, relative to its current position.
@@ -1404,7 +1491,7 @@ def dragRel(
         return  # no-op case
 
     mousex, mousey = platformModule._position()
-    _logScreenshot(logScreenshot, "dragRel", "%s,%s" % (xOffset, yOffset), folder=".")
+    _logScreenshot(logScreenshot, "dragRel", f"{xOffset},{yOffset}", folder=".")
     if mouseDownUp:
         mouseDown(button=button, logScreenshot=False, _pause=False)
     _mouseMoveDrag("drag", mousex, mousey, xOffset, yOffset, duration, tween, button)
@@ -1415,7 +1502,9 @@ def dragRel(
 drag = dragRel  # For PyAutoGUI 1.0, we want drag() to replace dragRel().
 
 
-def _mouseMoveDrag(moveOrDrag, x, y, xOffset, yOffset, duration, tween=linear, button=None):
+def _mouseMoveDrag(
+    moveOrDrag, x, y, xOffset, yOffset, duration, tween=linear, button=None
+):
     """Handles the actual move or drag event, since different platforms
     implement them differently.
 
@@ -1449,7 +1538,10 @@ def _mouseMoveDrag(moveOrDrag, x, y, xOffset, yOffset, duration, tween=linear, b
 
     # The move and drag code is similar, but OS X requires a special drag event instead of just a move event when dragging.
     # See https://stackoverflow.com/a/2696107/1893164
-    assert moveOrDrag in ("move", "drag"), "moveOrDrag must be in ('move', 'drag'), not %s" % (moveOrDrag)
+    assert moveOrDrag in (
+        "move",
+        "drag",
+    ), "moveOrDrag must be in ('move', 'drag'), not %s" % (moveOrDrag)
 
     if sys.platform != "darwin":
         moveOrDrag = "move"  # Only OS X needs the drag event specifically.
@@ -1486,7 +1578,10 @@ def _mouseMoveDrag(moveOrDrag, x, y, xOffset, yOffset, duration, tween=linear, b
             num_steps = int(duration / MINIMUM_SLEEP)
             sleep_amount = duration / num_steps
 
-        steps = [getPointOnLine(startx, starty, x, y, tween(n / num_steps)) for n in range(num_steps)]
+        steps = [
+            getPointOnLine(startx, starty, x, y, tween(n / num_steps))
+            for n in range(num_steps)
+        ]
         # Making sure the last position is the actual destination.
         steps.append((x, y))
 
@@ -1509,7 +1604,7 @@ def _mouseMoveDrag(moveOrDrag, x, y, xOffset, yOffset, duration, tween=linear, b
         elif moveOrDrag == "drag":
             platformModule._dragTo(tweenX, tweenY, button)
         else:
-            raise NotImplementedError("Unknown value of moveOrDrag: {0}".format(moveOrDrag))
+            raise NotImplementedError(f"Unknown value of moveOrDrag: {moveOrDrag}")
 
     if (tweenX, tweenY) not in FAILSAFE_POINTS:
         failSafeCheck()
@@ -1595,18 +1690,11 @@ def press(keys, presses=1, interval=0.0, logScreenshot=None, _pause=True):
     Returns:
       None
     """
-    if type(keys) == str:
-        if len(keys) > 1:
-            keys = keys.lower()
-        keys = [keys] # If keys is 'enter', convert it to ['enter'].
-    else:
-        lowerKeys = []
-        for s in keys:
-            if len(s) > 1:
-                lowerKeys.append(s.lower())
-            else:
-                lowerKeys.append(s)
-        keys = lowerKeys
+    keys = (
+        [k.lower() if len(k) > 1 else k for k in keys]
+        if type(keys) == list
+        else [keys.lower() if len(keys) > 1 else keys]
+    )
     interval = float(interval)
     _logScreenshot(logScreenshot, "press", ",".join(keys), folder=".")
     for i in range(presses):
@@ -1631,18 +1719,11 @@ def hold(keys, logScreenshot=None, _pause=True):
     Returns:
       None
     """
-    if type(keys) == str:
-        if len(keys) > 1:
-            keys = keys.lower()
-        keys = [keys] # If keys is 'enter', convert it to ['enter'].
-    else:
-        lowerKeys = []
-        for s in keys:
-            if len(s) > 1:
-                lowerKeys.append(s.lower())
-            else:
-                lowerKeys.append(s)
-        keys = lowerKeys
+    keys = (
+        [k.lower() if len(k) > 1 else k for k in keys]
+        if type(keys) == list
+        else [keys.lower() if len(keys) > 1 else keys]
+    )
     _logScreenshot(logScreenshot, "press", ",".join(keys), folder=".")
     for k in keys:
         failSafeCheck()
@@ -1711,14 +1792,11 @@ def hotkey(*args, **kwargs):
     interval = float(kwargs.get("interval", 0.0))  # TODO - this should be taken out.
 
     _logScreenshot(kwargs.get("logScreenshot"), "hotkey", ",".join(args), folder=".")
+    args = [c.lower() if len(c) > 1 else c for c in args]
     for c in args:
-        if len(c) > 1:
-            c = c.lower()
         platformModule._keyDown(c)
         time.sleep(interval)
     for c in reversed(args):
-        if len(c) > 1:
-            c = c.lower()
         platformModule._keyUp(c)
         time.sleep(interval)
 
@@ -1740,12 +1818,14 @@ def displayMousePosition(xOffset=0, yOffset=0):
 
     print("Press Ctrl-C to quit.")
     if xOffset != 0 or yOffset != 0:
-        print("xOffset: %s yOffset: %s" % (xOffset, yOffset))
+        print(f"xOffset: {xOffset} yOffset: {yOffset}")
     try:
         while True:
             # Get and print the mouse coordinates.
             x, y = position()
-            positionStr = "X: " + str(x - xOffset).rjust(4) + " Y: " + str(y - yOffset).rjust(4)
+            positionStr = (
+                "X: " + str(x - xOffset).rjust(4) + " Y: " + str(y - yOffset).rjust(4)
+            )
             if not onScreen(x - xOffset, y - yOffset) or sys.platform == "darwin":
                 # Pixel color can only be found for the primary monitor, and also not on mac due to the screenshot having the mouse cursor in the way.
                 pixelColor = ("NaN", "NaN", "NaN")
@@ -1773,7 +1853,9 @@ def displayMousePosition(xOffset=0, yOffset=0):
 def _snapshot(tag, folder=None, region=None, radius=None):
     # TODO feature not finished
     if region is not None and radius is not None:
-        raise Exception("Either region or radius arguments (or neither) can be passed to snapshot, but not both")
+        raise Exception(
+            "Either region or radius arguments (or neither) can be passed to snapshot, but not both"
+        )
 
     if radius is not None:
         x, y = platformModule._position()
@@ -1782,7 +1864,7 @@ def _snapshot(tag, folder=None, region=None, radius=None):
         folder = os.getcwd()
 
     now = datetime.datetime.now()
-    filename = "%s-%s-%s_%s-%s-%s-%s_%s.png" % (
+    filename = "{}-{}-{}_{}-{}-{}-{}_{}.png".format(
         now.year,
         str(now.month).rjust(2, "0"),
         str(now.day).rjust(2, "0"),
@@ -1838,7 +1920,9 @@ def _getQuotedStringToken(commandStr):
     pattern = re.compile(r"^((\s*)('(.*?)'))")
     mo = pattern.search(commandStr)
     if mo is None:
-        raise PyAutoGUIException("Invalid command at index 0: a quoted string was expected")
+        raise PyAutoGUIException(
+            "Invalid command at index 0: a quoted string was expected"
+        )
 
     return mo.group(1)
 
@@ -1858,7 +1942,9 @@ def _getParensCommandStrToken(commandStr):
     pattern = re.compile(r"^\s*\(")
     mo = pattern.search(commandStr)
     if mo is None:
-        raise PyAutoGUIException("Invalid command at index 0: No open parenthesis found.")
+        raise PyAutoGUIException(
+            "Invalid command at index 0: No open parenthesis found."
+        )
 
     # Check to make sure the parentheses are balanced:
     i = 0
@@ -1872,10 +1958,14 @@ def _getParensCommandStrToken(commandStr):
                 i += 1  # Remember to increment i past the ) before breaking.
                 break
             elif openParensCount == -1:
-                raise PyAutoGUIException("Invalid command at index 0: No open parenthesis for this close parenthesis.")
+                raise PyAutoGUIException(
+                    "Invalid command at index 0: No open parenthesis for this close parenthesis."
+                )
         i += 1
     if openParensCount > 0:
-        raise PyAutoGUIException("Invalid command at index 0: Not enough close parentheses.")
+        raise PyAutoGUIException(
+            "Invalid command at index 0: Not enough close parentheses."
+        )
 
     return commandStr[0:i]
 
@@ -1913,7 +2003,9 @@ def _tokenizeCommandStr(commandStr):
 
         mo = commandPattern.match(commandStr[i:])
         if mo is None:
-            raise PyAutoGUIException("Invalid command at index %s: %s is not a valid command" % (i, commandStr[i]))
+            raise PyAutoGUIException(
+                f"Invalid command at index {i}: {commandStr[i]} is not a valid command"
+            )
 
         individualCommand = mo.group(1)
         commandList.append(individualCommand)
@@ -1942,14 +2034,20 @@ def _tokenizeCommandStr(commandStr):
 
                 indexNum = indexPart[len("Invalid command at index ") :]
                 newIndexNum = int(indexNum) + i
-                raise PyAutoGUIException("Invalid command at index %s:%s" % (newIndexNum, message))
+                raise PyAutoGUIException(
+                    f"Invalid command at index {newIndexNum}:{message}"
+                )
 
             # Make sure either both x and y have +/- or neither of them do:
             if x.lstrip()[0].isdecimal() and not y.lstrip()[0].isdecimal():
-                raise PyAutoGUIException("Invalid command at index %s: Y has a +/- but X does not." % (i - len(y)))
+                raise PyAutoGUIException(
+                    "Invalid command at index %s: Y has a +/- but X does not."
+                    % (i - len(y))
+                )
             if not x.lstrip()[0].isdecimal() and y.lstrip()[0].isdecimal():
                 raise PyAutoGUIException(
-                    "Invalid command at index %s: Y does not have a +/- but X does." % (i - len(y))
+                    "Invalid command at index %s: Y does not have a +/- but X does."
+                    % (i - len(y))
                 )
 
             # Get rid of any whitespace at the front:
@@ -1971,7 +2069,9 @@ def _tokenizeCommandStr(commandStr):
 
                 indexNum = indexPart[len("Invalid command at index ") :]
                 newIndexNum = int(indexNum) + i
-                raise PyAutoGUIException("Invalid command at index %s:%s" % (newIndexNum, message))
+                raise PyAutoGUIException(
+                    f"Invalid command at index {newIndexNum}:{message}"
+                )
 
             # Get rid of any whitespace at the front:
             commandList.append(num.lstrip())
@@ -1988,7 +2088,9 @@ def _tokenizeCommandStr(commandStr):
 
                 indexNum = indexPart[len("Invalid command at index ") :]
                 newIndexNum = int(indexNum) + i
-                raise PyAutoGUIException("Invalid command at index %s:%s" % (newIndexNum, message))
+                raise PyAutoGUIException(
+                    f"Invalid command at index {newIndexNum}:{message}"
+                )
 
             # Get rid of any whitespace at the front and the quotes:
             commandList.append(quotedString[1:-1].lstrip())
@@ -2009,7 +2111,9 @@ def _tokenizeCommandStr(commandStr):
 
                 indexNum = indexPart[len("Invalid command at index ") :]
                 newIndexNum = int(indexNum) + i
-                raise PyAutoGUIException("Invalid command at index %s:%s" % (newIndexNum, message))
+                raise PyAutoGUIException(
+                    f"Invalid command at index {newIndexNum}:{message}"
+                )
 
             # Get rid of any whitespace at the front:
             commandList.append(numberOfLoops.lstrip())
@@ -2050,13 +2154,19 @@ def _runCommandList(commandList, _ssCount):
             PAUSE = float(commandList[i + 1])
             i += 1
         elif command == "g":
-            if commandList[i + 1][0] in ("+", "-") and commandList[i + 2][0] in ("+", "-"):
+            if commandList[i + 1][0] in ("+", "-") and commandList[i + 2][0] in (
+                "+",
+                "-",
+            ):
                 move(int(commandList[i + 1]), int(commandList[i + 2]))
             else:
                 moveTo(int(commandList[i + 1]), int(commandList[i + 2]))
             i += 2
         elif command == "d":
-            if commandList[i + 1][0] in ("+", "-") and commandList[i + 2][0] in ("+", "-"):
+            if commandList[i + 1][0] in ("+", "-") and commandList[i + 2][0] in (
+                "+",
+                "-",
+            ):
                 drag(int(commandList[i + 1]), int(commandList[i + 2]))
             else:
                 dragTo(int(commandList[i + 1]), int(commandList[i + 2]))
@@ -2142,20 +2252,29 @@ def run(commandStr, _ssCount=None):
 
 
 def printInfo(dontPrint=False):
-    msg = '''
+    msg = """
          Platform: {}
    Python Version: {}
 PyAutoGUI Version: {}
        Executable: {}
        Resolution: {}
-        Timestamp: {}'''.format(*getInfo())
+        Timestamp: {}""".format(
+        *getInfo()
+    )
     if not dontPrint:
         print(msg)
     return msg
 
 
 def getInfo():
-    return (sys.platform, sys.version, __version__, sys.executable, size(), datetime.datetime.now())
+    return (
+        sys.platform,
+        sys.version,
+        __version__,
+        sys.executable,
+        size(),
+        datetime.datetime.now(),
+    )
 
 
 # Add the bottom left, top right, and bottom right corners to FAILSAFE_POINTS.
